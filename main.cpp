@@ -9,7 +9,7 @@ private:
     bool directed;
 
 public:
-    Graph(int size, bool directed, const vector<vector<int>> &edges){
+    Graph(int size, bool directed, const vector<vector<int>> &edges){       // Constructor
         this->directed = directed;
         this->adjList.resize(size + 1);
         for(auto edge : edges){
@@ -87,6 +87,38 @@ public:
         }
         return res;
     }
+    void criticalConnectionsDfs(int curr, int prev, vector<int> &vis, vector<int> &disc, vector<int> &low, vector<vector<int>> &bridges, int timer){
+        vis[curr] = 1;
+        disc[curr] = low[curr] = timer;
+        timer++;
+        for(auto node : this->adjList[curr]){
+            if(node == prev){
+                continue;
+            }
+            if(!vis[node]){
+                criticalConnectionsDfs(node, curr, vis, disc, low, bridges, timer);
+                low[curr] = min(low[node], low[curr]);
+
+                if(low[node] > disc[curr]){
+                    vector<int> sol;
+                    sol.push_back(node);
+                    sol.push_back(curr);
+                    bridges.push_back(sol);
+                }
+            }
+            else{
+                low[curr] = min(low[node], low[curr]);
+            }
+        }
+    }
+    vector<vector<int>> criticalConnections(){
+        int n = this->adjList.size();
+        vector<int> disc(n), low(n), vis(n);
+        vector<vector<int>> bridges;
+        int timer = 1;
+        criticalConnectionsDfs(0, -1, vis, disc, low, bridges, timer);
+        return bridges;
+    }
 };
 /////////////////////////////////////////////// CLASA GRAF //////////////////////////////////////////////
 
@@ -113,6 +145,12 @@ public:
         reverse(res.begin(), res.end());
         return res;
     }
+
+    vector<vector<int>> criticalConnections(int n, vector<vector<int>>& connections) {
+        Graph G(n, false, connections);
+        return G.criticalConnections();
+    }
+
 };
 /////////////////////////////////////////////// CLASA SOLUTIE //////////////////////////////////////////////
 
