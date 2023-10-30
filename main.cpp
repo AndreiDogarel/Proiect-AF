@@ -36,7 +36,7 @@ private:
 public:
     Graph(int size, bool directed, const vector<vector<int>> &edges){       // Constructor 1
         this->directed = directed;
-        this->adjList.resize(size);
+        this->adjList.resize(size + 1);
         for(auto edge : edges){
             this->adjList[edge[0]].push_back(edge[1]);
             if(this->directed == false){
@@ -86,6 +86,24 @@ public:
             }
         }
         return true;
+    }
+
+    vector<int> findBipartition(int startNode){
+        vector<int> colours(this->adjList.size() + 1, -1);
+        queue<int> q;
+        q.push(startNode);
+        colours[startNode] = 1;
+        while(!q.empty()){
+            int x = q.front();
+            q.pop();
+            for(auto i : this->adjList[x]){
+                if(colours[i] == -1){
+                    colours[i] = 1 - colours[x];
+                    q.push(i);
+                }
+            }
+        }
+        return colours;
     }
 
     vector<int> findTopologicalSort(){      // Returns a topological sort solution for a directed graph
@@ -284,6 +302,64 @@ public:
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// https://www.infoarena.ro/problema/padure
+    int minCostForest(vector<vector<int>>& grid, const int& n, const int& m, const int& pl, const int& pc, const int& cl, const int& cc){
+        vector<vector<int>> cost;
+        vector<pair<int, int>> directions = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} };
+        cost.assign(n, vector<int>(m, 1e9));
+        deque<pair<int, int>> dq;
+        cost[pl][pc] = 0;
+        dq.push_front({pl, pc});
+        while(!dq.empty()){
+            int x = dq.front().first;
+            int y = dq.front().second;
+            dq.pop_front();
+            for(auto d : directions){
+                int inou = d.first + x;
+                int jnou = d.second + y;
+                if(inou >= 0 && inou < n && jnou >= 0 && jnou < m && cost[inou][jnou] > cost[x][y]){
+                    if(grid[inou][jnou] != grid[x][y]){
+                        cost[inou][jnou] = cost[x][y] + 1;
+                        dq.push_back({inou, jnou});
+                    }
+                    else{
+                        cost[inou][jnou] = cost[x][y];
+                        dq.push_front({inou, jnou});
+                    }
+                }
+            }
+        }
+        return cost[cl][cc];
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://codeforces.com/contest/1144/problem/F
+    string graphWithoutLongDirectedPaths(int n, vector<vector<int>>& connections){
+        string ans = "";
+        Graph G(n, false, connections);
+        vector<int> colours(n + 1, -1);
+        if(!G.checkForBipartition(1, colours)){
+            return "NO";
+        }
+        else{
+            colours = G.findBipartition(1);
+            for(int i = 0; i < connections.size(); ++i){
+                if(colours[connections[i][0]] == 0 && colours[connections[i][1]] == 1){
+                    ans += "0";
+                }
+                else{
+                    ans += "1";
+                }
+            }
+            return ("YES\n" + ans);
+        }
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://codeforces.com/contest/1881/problem/F
+    int minimumMaximumDistance(int testCases){
+        
+    }
 };
 /////////////////////////////////////////////// CLASA SOLUTIE //////////////////////////////////////////////
 
