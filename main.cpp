@@ -3,6 +3,7 @@
 using namespace std;
 
 /////////////////////////////////////////////// CLASA GRAF //////////////////////////////////////////////
+
 class Graph {
 private:
     vector<vector<int>> adjList;
@@ -56,7 +57,7 @@ public:
         this->adjList = obj.adjList;
         this->directed = obj.directed;
     }
-    vector<int>& operator [] (int node){        // [] operator overload
+    vector<int> operator [] (int node) const {        // [] operator overload
         try{
             if(node > this->adjList.size() || node < 0){
                 throw runtime_error("Nod invalid!");
@@ -143,10 +144,13 @@ public:
         return bridges;
     }
 };
+
 /////////////////////////////////////////////// CLASA GRAF //////////////////////////////////////////////
 
 
+
 /////////////////////////////////////////////// CLASA SOLUTIE //////////////////////////////////////////////
+
 class Solution {
 private:
     void findIsland(int i, int j, int n, vector<vector<bool>>& vis, vector<pair<int, int>>& island, vector<vector<int>>& grid){     // Helper for shortestBridge
@@ -193,6 +197,15 @@ private:
             else{
                 TT[tta] = ttb;
                 RG[ttb] += RG[tta];
+            }
+        }
+    }
+
+    void calcDistances(const Graph& G, int curr, int prev, vector<int>& d){
+        d[curr] = d[prev] + 1;
+        for(auto v : G[curr]){
+            if(v != prev){
+                calcDistances(G, v, curr, d);
             }
         }
     }
@@ -357,13 +370,35 @@ public:
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // https://codeforces.com/contest/1881/problem/F
-    int minimumMaximumDistance(int testCases){
-        
+    int minimumMaximumDistance(int n, vector<int>& marked, vector<vector<int>>& connections){
+        Graph G(n, false, connections);
+        if(marked.size() == 1){
+            return 0;
+        }
+        vector<int> d1(n + 1, 0), d2(n + 1, 0);
+        d1[0] = d2[0] = -1;
+        calcDistances(G, marked[0], 0, d1);
+        int poz = marked[0];
+        for(auto node : marked){
+            if(d1[node] > d1[poz]){
+                poz = node;
+            }
+        }
+        calcDistances(G, poz, 0, d2);
+        poz = marked[0];
+        for(auto node : marked){
+            if(d2[node] > d2[poz]){
+                poz = node;
+            }
+        }
+        return (d2[poz] + 1) / 2;
     }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 };
+
 /////////////////////////////////////////////// CLASA SOLUTIE //////////////////////////////////////////////
 
 
 int main(){
-    
+
 }
