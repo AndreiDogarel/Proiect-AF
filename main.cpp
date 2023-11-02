@@ -153,7 +153,9 @@ public:
 
 class Solution {
 private:
-    void findIsland(int i, int j, int n, vector<vector<bool>>& vis, vector<pair<int, int>>& island, vector<vector<int>>& grid){     // Helper for shortestBridge
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper pentru problema Shortest Bridge, marcheaza zonele de 1 invecinate ce formeaza o insula
+    void findIsland(int i, int j, int n, vector<vector<bool>>& vis, vector<pair<int, int>>& island, vector<vector<int>>& grid){
         queue<pair<int, int>> q;
         vector<pair<int, int>> directions = 
         {
@@ -176,7 +178,8 @@ private:
             }
         }
     }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper pentru problema Satisfiability-Of-Equality-Equations, uneste radacini de paduri de elemente dupa rang
     int doFind(int n, int TT[], int RG[]){
         if(TT[n] == n){
             return n;
@@ -200,7 +203,8 @@ private:
             }
         }
     }
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper pentru problema Minimum Maximum Distance, calculeaza distanta de la nodul de plecare la fiecare nod in parte
     void calcDistances(const Graph& G, int curr, int prev, vector<int>& d){
         d[curr] = d[prev] + 1;
         for(auto v : G[curr]){
@@ -209,6 +213,29 @@ private:
             }
         }
     }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Helper pentru problema Patrol2, calculeaza timpul minim de a ajunge de la nodul node la fiecare nod in parte in functie de disponibilitatea la timpul time
+    void escapePatrols(int node, vector<vector<int>>& minimumTime, vector<vector<bool>>& occupied, const int fullCycle, const Graph& G){
+        queue<pair<int, int>> q;
+        q.push({node, 0});
+        minimumTime[node][0] = 0;
+        while(!q.empty()){
+            pair<int, int> x = q.front();
+            q.pop();
+            int time = (x.second + 1) % fullCycle;
+            for(auto neigh : G[x.first]){
+                if(!occupied[neigh][time] && minimumTime[neigh][time] > minimumTime[x.first][x.second] + 1){
+                    minimumTime[neigh][time] = minimumTime[x.first][x.second] + 1;
+                    q.push({neigh, time});
+                }
+            }
+            if(!occupied[x.first][time] && minimumTime[x.first][time] > minimumTime[x.first][x.second] + 1){
+                minimumTime[x.first][time] = minimumTime[x.first][x.second] + 1;
+                q.push({x.first, time});
+            }
+        }
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 public:
 // https://leetcode.com/problems/possible-bipartition/
@@ -392,6 +419,31 @@ public:
             }
         }
         return (d2[poz] + 1) / 2;
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://www.infoarena.ro/problema/patrol2
+    int bestEscapeTimePatrols(int n, vector<vector<int>>& connections, int numberOfPatrols, vector<int>& patrolLength, vector<vector<int>>& patrols){
+        Graph G(n, false, connections);
+        const int fullCycle = 420;
+        vector<vector<bool>> occupied(n, vector<bool>(fullCycle, false));
+        vector<vector<int>> minimumTime(n, vector<int>(fullCycle, 1e9));
+        for(int i = 0; i < fullCycle; ++i){
+            for(int j = 0; j < numberOfPatrols; ++j){
+                occupied[patrols[j][i % patrolLength[j]]][i] = true;
+            }
+        }
+        escapePatrols(0, minimumTime, occupied, fullCycle, G);
+        int res = 1e9;
+        for(int i = 0; i < fullCycle; ++i){
+            res = min(res, minimumTime[n - 1][i]);
+        }
+        if(res == 1e9){
+            return -1;
+        }
+        else{
+            return res;
+        }
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 };
