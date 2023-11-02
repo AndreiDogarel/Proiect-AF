@@ -9,7 +9,9 @@ private:
     vector<vector<int>> adjList;
     bool directed;
 
-    void criticalConnectionsDfs(int curr, int prev, vector<int> &vis, vector<int> &disc, vector<int> &low, vector<vector<int>> &bridges, int timer){        // Helper for the function below
+    // Helper pentru functia ce returneaza muchiile critice, calculeaza timpul de descoperire si cel mai mic nivel in care poate ajunge un nod 
+    // printr-o muchie de intoarcere din arborele DFS
+    void criticalConnectionsDfs(int curr, int prev, vector<int> &vis, vector<int> &disc, vector<int> &low, vector<vector<int>> &bridges, int timer){
         vis[curr] = 1;
         disc[curr] = low[curr] = timer;
         timer++;
@@ -69,7 +71,7 @@ public:
         }
     }
 
-    bool checkForBipartition(int startNode, vector<int>& colours){      // Returns true if the graph is bipartite, else returns false
+    bool checkForBipartition(int startNode, vector<int>& colours){      // Returneaza TRUE daca graful este bipartit, FALSE altfel
         queue<int> q;
         q.push(startNode);
         colours[startNode] = 1;
@@ -89,7 +91,7 @@ public:
         return true;
     }
 
-    vector<int> findBipartition(int startNode){
+    vector<int> findBipartition(int startNode){     // Returneaza o posibilia colorare a unui graf bipartit
         vector<int> colours(this->adjList.size() + 1, -1);
         queue<int> q;
         q.push(startNode);
@@ -107,7 +109,7 @@ public:
         return colours;
     }
 
-    vector<int> findTopologicalSort(){      // Returns a topological sort solution for a directed graph
+    vector<int> findTopologicalSort(){      // Returneaza o posibila solutie pentru sortarea topologica a unui graf orientat
         const int n = this->adjList.size();
         vector<int> intDeg(n, 0), res;
         for(auto neighbours : this->adjList){
@@ -135,7 +137,7 @@ public:
         return res;
     }
 
-    vector<vector<int>> criticalConnections(){      // Returns critical connections in a graph
+    vector<vector<int>> criticalConnections(){      // Returneaza un vector de muchh critice intr-un graf
         int n = this->adjList.size();
         vector<int> disc(n), low(n), vis(n);
         vector<vector<int>> bridges;
