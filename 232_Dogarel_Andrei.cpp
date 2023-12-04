@@ -7,6 +7,7 @@ using namespace std;
 class Graph {
 private:
     vector<vector<int>> adjList;
+    vector<vector<pair<int, int>>> adjListCosts;
     bool directed;
 
     // Helper pentru functia ce returneaza muchiile critice, calculeaza timpul de descoperire si cel mai mic nivel in care poate ajunge un nod 
@@ -37,7 +38,7 @@ private:
     }
 
 public:
-    Graph(int size, bool directed, const vector<vector<int>> &edges){       // Constructor 1
+    Graph(int size, bool directed, const vector<vector<int>>& edges){       // Constructor 1
         this->directed = directed;
         this->adjList.resize(size + 1);
         for(auto edge : edges){
@@ -50,6 +51,10 @@ public:
     Graph(bool directed, const vector<vector<int>>& list){      // Constructor 2
         this->directed = directed;
         this->adjList = list;
+    }
+    Graph(bool directed, const vector<vector<pair<int, int>>>& list){       // Constructor 3
+        this->directed = directed;
+        this->adjListCosts = list;
     }
     Graph(const Graph& obj){        // Copy constructor
         this->adjList = obj.adjList;
@@ -145,10 +150,41 @@ public:
         criticalConnectionsDfs(0, -1, vis, disc, low, bridges, timer);
         return bridges;
     }
+
+    int dijkstra(int startNode, int finalNode){
+        int n = this->adjListCosts.size();
+        set<pair<int, int>> minHeap;
+        vector<bool> vis(n + 1, false);
+        vector<int> distance(n + 1, INT_MAX);
+        distance[startNode] = 0;
+        minHeap.insert({0, startNode});
+        while(!minHeap.empty()){
+            int node = (*minHeap.begin()).second;
+            minHeap.erase(minHeap.begin());
+            if(vis[node]){
+                continue; 
+            }
+            vis[node] = true;
+            for(auto neigh : this->adjListCosts[node]){
+                if(distance[neigh.first] > distance[node] + neigh.second){
+                    distance[neigh.first] = distance[node] + neigh.second;
+                    minHeap.insert({distance[neigh.first], neigh.first});
+                }
+            }
+        }
+        return distance[finalNode];
+    }
 };
 
 /////////////////////////////////////////////// CLASA GRAF //////////////////////////////////////////////
 
+
+struct Muchie {
+    int x, y, cost;
+    bool operator < (const Muchie& obj){
+        return cost < obj.cost;
+    }
+};
 
 
 /////////////////////////////////////////////// CLASA SOLUTIE //////////////////////////////////////////////
@@ -205,7 +241,11 @@ private:
             }
         }
     }
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    double calcDist(const pair<int, int>& a, const pair<int, int>& b){
+        return sqrt((b.first - a.first) * (b.first - a.first) + (b.second - a.second) * (b.second - a.second));
+    }
+/////////////////////////////////////////////////////////////// TEMA 1 ////////////////////////////////////////////////////////////////////////
 // Helper pentru problema Minimum Maximum Distance, calculeaza distanta de la nodul de plecare la fiecare nod in parte
     void calcDistances(const Graph& G, int curr, int prev, vector<int>& d){
         d[curr] = d[prev] + 1;
@@ -447,12 +487,145 @@ public:
             return res;
         }
     }
+///////////////////////////////////////////////////////////////////// TEMA 1 //////////////////////////////////////////////////////////////////
+
+
+///////////////////////////////////////////////////////////////////// TEMA 2 //////////////////////////////////////////////////////////////////
+// https://www.infoarena.ro/problema/cablaj
+    void cablaj(){
+        ifstream f("cablaj.in");
+        ofstream g("cablaj.out");
+
+        const double INF = 1e9;
+        int n;
+        vector<pair<int, int>> points;
+
+        f >> n;
+        for(int i = 1; i <= n; ++i){
+            int x, y;
+            f >> x >> y;
+            points.push_back({x, y});
+        }
+        vector<double> dist(n, INF);
+        vector<bool> vis(n, false);
+        vis[0] = true;
+        int currVf = 0;
+        int nrMuchii = 0;
+        double res = 0.0;
+        while(nrMuchii < n - 1){
+            for(int i = 0; i < n; ++i){
+                if(!vis[i]){
+                    dist[i] = min(dist[i], calcDist(points[i], points[currVf]));
+                }
+            }
+            double minDist = INF;
+            for(int i = 0; i < n; ++i){
+                if(!vis[i] && minDist > dist[i]){
+                    minDist = dist[i];
+                    currVf = i;
+                }
+            }
+            vis[currVf] = true;
+            res += minDist;
+            nrMuchii++;
+        }
+        g << fixed << setprecision(4) << res;
+    }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://www.infoarena.ro/problema/rusuoaica
+    void rusuoaica(){
+        ifstream f("rusuoaica.in");
+        ofstream g("rusuoaica.out");
+
+        const int NMAX = 1e5 + 5;
+        int n, m, A, TT[NMAX], RG[NMAX];
+        vector<Muchie> muchii;
+
+        f >> n >> m >> A;
+        for(int i = 1; i <= m; ++i){
+            int x, y, cost;
+            f >> x >> y >> cost;
+            muchii.push_back({x, y, cost});
+        }
+        for(int i = 1; i <= n; ++i){
+            TT[i] = i;
+            RG[i] = 1;
+        }
+        sort(muchii.begin(), muchii.end());
+        int res = 0, nr = 0;
+        for(int i = 0; i < m && nr < n - 1; ++i){
+            int r1 = doFind(muchii[i].x, TT, RG), r2 = doFind(muchii[i].y, TT, RG);
+            if(r1 != r2 && muchii[i].cost <= A){
+                doUnion(r1, r2, TT, RG);
+                res += muchii[i].cost;
+                nr++;
+            }
+            else{
+                res -= muchii[i].cost;
+            }
+        }
+        g << res + (n - nr - 1) * A;
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://www.infoarena.ro/problema/camionas
+    void camionas(){
+        ifstream f("camionas.in");
+        ofstream g("camionas.out");
+
+        vector<vector<pair<int, int>>> graf;
+        int n, m, G;
+        f >> n >> m >> G;
+        graf.resize(n + 1);
+        for(int i = 1; i <= m; ++i){
+            int x, y, c;
+            f >> x >> y >> c;
+            if(c >= G){
+                c = 0;
+            }
+            else{
+                c = 1;
+            }
+            graf[x].push_back({y, c});
+            graf[y].push_back({x, c});
+        }
+        Graph Graf(false, graf);
+        g << Graf.dijkstra(1, n);
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://www.infoarena.ro/problema/trilant
+    void trilant(){
+        ifstream f("trilant.in");
+        ofstream g("trilant.out");
+
+        const int NMAX = 1e5 + 5;
+        int n, m, A, B, C, TTA[NMAX], TTB[NMAX], TTC[NMAX];
+        long long distA[NMAX], distB[NMAX], distC[NMAX];
+        vector<vector<pair<int, long long>>> graf;
+        f >> n >> m;
+        f >> A >> B >> C;
+        graf.resize(n + 1);
+        for(int i = 1; i <= m; ++i){
+            int x, y;
+            long long cost;
+            f >> x >> y >> cost;
+            graf[x].push_back({y, cost});
+            graf[y].push_back({x, cost});
+        }
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////// TEMA 2 //////////////////////////////////////////////////////////////////
+
 };
 
 /////////////////////////////////////////////// CLASA SOLUTIE //////////////////////////////////////////////
 
 
 int main(){
-
+    Solution s;
+    s.camionas();
+    return 0;
 }
